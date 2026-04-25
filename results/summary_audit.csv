@@ -1,3 +1,5 @@
-horizon,all_started_periods,all_started_permnos,included_periods,included_permnos,complete_periods,delisted_partial_periods,sample_end_censored_periods,median_realized_months_included
-10y,54688,31565,49454,28950,23269,26185,5234,108.0
-30y,34766,31565,29522,27420,3219,26303,5244,85.0
+analysis,horizon,all_started_periods,all_started_permnos,included_periods,included_permnos,complete_periods,delisted_partial_periods,sample_end_censored_periods,sparse_periods,median_realized_months_included
+stock_anchored,10y,54688,31565,49454,28950,23269,26185,5234,7,108.0
+stock_anchored,30y,34766,31565,29522,27420,3219,26303,5244,7,85.0
+calendar_window,10y,35167,19495,35167,19495,18303,16864,0,6,120.0
+calendar_window,30y,7856,7119,7856,7119,1558,6298,0,3,128.0

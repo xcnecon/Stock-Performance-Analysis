@@ -25,6 +25,10 @@ The analysis must include every stock that was ever listed during the period
 under study, not just stocks still trading at the end. Restricting the sample to
 survivors would systematically overstate returns.
 
+The universe is US-listed common stocks. The code explicitly filters to common
+equity and excludes REITs, ETFs, closed-end funds, and other non-common-stock
+securities.
+
 **Delisting rule:** if a stock is acquired, merged, liquidated, or delisted for
 any reason before the holding period ends, its return is computed from the start
 of the period to the delisting date using the CRSP monthly return stream. The
@@ -32,17 +36,22 @@ stock is not dropped from the sample.
 
 **Holding-period construction:**
 
-- 10-year and 30-year buckets: for each stock, form non-overlapping holding
-  periods starting from its first observed CRSP month. A period that begins but
-  cannot complete because the stock delists early is still included, terminated
-  at the stock's last observed month.
+- Stock-anchored 10-year and 30-year periods: for each stock, form
+  non-overlapping holding periods starting from its first observed CRSP month.
+  A period that begins but cannot complete because the stock delists early is
+  still included, terminated at the stock's last observed month.
+- Calendar start-cohort windows: fixed windows such as 1925-1935, 1935-1945,
+  and 1985-2015. A stock must exist at the window start to enter that window;
+  stocks listed midway through the window are not added halfway.
 - Active periods that are incomplete only because the sample ends are retained
   in the detail/audit output but excluded from headline holding-period
   summaries.
 - Full-life: from first available monthly return to last available monthly
   return.
 
-Market-return comparisons are intentionally excluded from the current report.
+Detail outputs include CRSP terminal fields, sparse-history flags, a
+first-period-per-stock companion summary, and a first-observed-return
+sensitivity table.
 
 ## Repository Layout
 
