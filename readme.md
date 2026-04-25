@@ -1,57 +1,60 @@
 # Stock Performance Analysis
 
-Long-run return distributions of US-listed common stocks, CRSP monthly 1925-12 – 2025-12, **31,565 stocks** (EQTY ex-REIT, ex-ETF, ex-closed-end-fund). Survivorship-bias-free: every stock that ever listed is retained, delistings terminate the return stream at the delisting value.
+Long-run return distributions of US-listed common stocks using CRSP monthly
+data from 1925-12 through 2025-12. The analysis covers 31,565 common-stock
+PERMNOs after filtering to `SecurityType == 'EQTY'` and excluding REIT issuers.
 
-**Calendar-window methodology:** every 10-year (1925-35, 1935-45, … 2015-25) and 30-year (1925-55, 1955-85, 1985-2015) window is analysed on its own cohort, so the variation in return distributions across eras (Depression, stagflation, dot-com, mega-cap era) is visible directly.
+The core methodology is survivorship-bias aware: 10-year and 30-year results
+use stock-anchored, non-overlapping holding periods that start from each stock's
+first observed CRSP month. If a stock delists before the planned horizon ends,
+the partial return through its last observed month is included. Active periods
+that are incomplete only because the sample ends are kept in the audit file but
+excluded from headline summaries.
 
-## Three questions
+Market-return comparisons have been removed so the report focuses on the
+distribution of individual stock outcomes.
 
-1. What percentage of US common stocks produce a positive return over each 10-year calendar window?
-2. Over each 30-year calendar window?
-3. Over each stock's entire listed life?
+See [`results/report.md`](results/report.md) or [`results/report.docx`](results/report.docx)
+for the full write-up.
 
-Each answered in nominal and CPI-adjusted (real) terms, with the share of stocks beating the CRSP value-weighted market total return.
+## Headline Results
 
-See [`results/report.md`](results/report.md) or [`results/report.docx`](results/report.docx) for the full write-up.
-
-## Headline — % positive across decades (10-year windows)
-
-| Decade | % pos nominal | % pos real | Market return | % beat market |
-| --- | ---: | ---: | ---: | ---: |
-| 1925-1935 | 40.7 % | 48.8 % | +48 % | 28 % |
-| 1935-1945 | 87.6 % | 83.8 % | +137 % | 51 % |
-| 1945-1955 | 88.5 % | 78.9 % | +302 % | 29 % |
-| 1955-1965 | **89.0 %** | **85.8 %** | +194 % | 41 % |
-| 1965-1975 | 59.3 % | **38.0 %** | +31 % | 43 % |
-| 1975-1985 | 87.8 % | 79.7 % | +326 % | 47 % |
-| 1985-1995 | 57.5 % | 52.1 % | +265 % | **15 %** |
-| 1995-2005 | 60.8 % | 56.9 % | +144 % | 28 % |
-| 2005-2015 | 55.5 % | 50.7 % | +93 % | 25 % |
-| 2015-2025 | 62.2 % | 56.8 % | +252 % | **16 %** |
+| Horizon | Basis | Observations | PERMNOs | % positive | Median |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 10-year | nominal | 49,454 | 28,950 | 57.3 % | +23.7 % |
+| 10-year | real (CPI-adj) | 49,454 | 28,950 | 49.9 % | -0.2 % |
+| 30-year | nominal | 29,522 | 27,420 | 51.0 % | +2.9 % |
+| 30-year | real (CPI-adj) | 29,522 | 27,420 | 44.0 % | -18.5 % |
+| Full-life | nominal | 31,565 | 31,565 | 48.1 % | -7.4 % |
+| Full-life | real (CPI-adj) | 31,565 | 31,565 | 41.3 % | -29.3 % |
 
 ## Layout
 
-```
+```text
 program/
-  run_analysis.py    — calendar-window analysis (end-to-end)
-  build_docx.py      — renders results/report.docx
+  run_analysis.py    stock-anchored analysis and chart generation
+  build_docx.py      renders results/report.docx and results/report.md
 data/
-  data.csv           — CRSP monthly (gitignored, ~2.6 GB)
-  cpi.csv            — BLS CPI-U monthly, 1925-2025
-  cpi_source.csv     — raw CPI year × month grid
-  Monthly Stock File.pdf — CRSP schema
-results/             — report.md, report.docx, summaries, charts, long-format returns
+  data.csv           CRSP monthly input, gitignored
+  cpi.csv            BLS CPI-U monthly, 1925-2025
+  cpi_source.csv     raw CPI source table
+  Monthly Stock File.pdf
+results/
+  report.md, report.docx
+  summary_10y.csv, summary_30y.csv, summary_holding_periods.csv
+  summary_fulllife.csv, summary_audit.csv, universe_summary.csv
+  returns_10y.csv, returns_30y.csv, holding_period_audit.csv
+  permno_fulllife.csv
+  hist_10y_nominal.png, hist_10y_real.png
+  hist_30y_nominal.png, hist_30y_real.png
+  hist_fulllife_nominal.png, hist_fulllife_real.png
 ```
 
 ## Running
 
 ```bash
-python program/run_analysis.py     # ~50 s
-python program/build_docx.py       # ~3 s
+python program/run_analysis.py
+python program/build_docx.py
 ```
 
-Requires Python 3.11+, pandas, numpy, matplotlib, python-docx.
-
-## Data
-
-CRSP monthly data (compressed): https://drive.google.com/file/d/1in12j\_ytRMzcS-HjPdPxjIm9EfiwcunB/view?usp=sharing
+Requires Python 3.11+, pandas, numpy, matplotlib, and python-docx.

@@ -1,0 +1,2 @@
+raw_rows_after_universe_filter,permnos,sample_start_ymm,sample_end_ymm,n_months,mthret_null_filled_nt,cpi_start_ymm,cpi_end_ymm,cpi_factor,cpi_cagr,issuer_counts,share_type_counts
+4405424,31565,192512,202512,1201,82255,192501,202512,18.7314450867052,0.029436862711434753,CORP: 22691; ACOR: 8874,NS: 29716; AD: 1377; UG: 380; SB: 76; CE: 16

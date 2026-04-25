@@ -1,4 +1,6 @@
 .claude/
+claude.md
+agent.md
 data/data.csv
 
 # Python
