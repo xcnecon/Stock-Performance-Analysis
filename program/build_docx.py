@@ -191,6 +191,7 @@ def sensitivity_rows(sens: pd.DataFrame) -> list[list[str]]:
 def audit_rows(audit: pd.DataFrame) -> list[list[str]]:
     rows = []
     for _, row in audit.iterrows():
+        no_post = int(row["no_post_start_obs_periods"]) if "no_post_start_obs_periods" in row.index else 0
         rows.append([
             row["analysis"],
             row["horizon"],
@@ -200,6 +201,7 @@ def audit_rows(audit: pd.DataFrame) -> list[list[str]]:
             f"{int(row['complete_periods']):,}",
             f"{int(row['delisted_partial_periods']):,}",
             f"{int(row['sample_end_censored_periods']):,}",
+            f"{no_post:,}",
             f"{int(row['sparse_periods']):,}",
         ])
     return rows
@@ -305,13 +307,19 @@ def build_docx(data: dict[str, pd.DataFrame]) -> None:
         doc,
         "The calendar-window view forms start cohorts at fixed dates such as 1925-12, "
         "1935-12, and so on. A stock must be present at the start of a calendar window; "
-        "stocks that list midway through that window are not added halfway."
+        "stocks that list midway through that window are not added halfway. The window "
+        "represents a buy-at-end-of-start_ymm to sell-at-end-of-target_end_ymm investor: "
+        "the start_ymm month return itself is excluded from compounding, since it was "
+        "earned before the assumed entry. Cohort stocks whose only observation is the "
+        "start_ymm month (delisted during the start month, hence not tradable at end of "
+        "start_ymm) are excluded from headline summaries via the no-post-start-obs flag."
     )
     add_para(
         doc,
         "Detail files include CRSP terminal fields and sparse-history flags for auditability. "
-        "The main return convention includes the first observed monthly return; a sensitivity "
-        "table also reports results after skipping that first observed return."
+        "For stock-anchored periods the main return convention includes the first observed "
+        "monthly return; a sensitivity table also reports results after skipping that first "
+        "observed return."
     )
 
     add_heading(doc, "3. Stock-Anchored Results", 1)
@@ -373,7 +381,8 @@ def build_docx(data: dict[str, pd.DataFrame]) -> None:
     add_table(
         doc,
         ["Analysis", "Horizon", "Started periods", "Started PERMNOs", "Included periods",
-         "Complete", "Delisted partial", "Sample-end censored", "Sparse"],
+         "Complete", "Delisted partial", "Sample-end censored",
+         "No post-start obs", "Sparse"],
         audit_rows(audit),
     )
 
@@ -425,7 +434,11 @@ def build_markdown(data: dict[str, pd.DataFrame]) -> None:
         "sample-end-censored active periods are audited but excluded from headline summaries.",
         "",
         "A second calendar start-cohort view reports fixed windows such as 1925-1935 and 1935-1945. "
-        "Stocks must exist at the start of a calendar window to enter it.",
+        "Stocks must exist at the start of a calendar window to enter it. The window represents a "
+        "buy-at-end-of-start_ymm investor, so the start_ymm month return itself is excluded from "
+        "compounding (it was earned before the assumed entry). Cohort stocks with only the "
+        "start_ymm observation (delisted during the start month) are flagged and excluded from "
+        "headline summaries.",
         "",
         "## Data And Universe",
         "",
@@ -499,7 +512,8 @@ def build_markdown(data: dict[str, pd.DataFrame]) -> None:
         "",
         markdown_table(
             ["Analysis", "Horizon", "Started periods", "Started PERMNOs", "Included periods",
-             "Complete", "Delisted partial", "Sample-end censored", "Sparse"],
+             "Complete", "Delisted partial", "Sample-end censored",
+             "No post-start obs", "Sparse"],
             audit_rows(audit),
         ),
         "",

@@ -220,9 +220,9 @@ def build_holding_periods(df: pd.DataFrame, horizon_years: int,
                 "nominal_ret": compound_return(nominal[start_pos:end_pos]),
                 "real_ret": compound_return(real[start_pos:end_pos]),
                 "nominal_ret_skip_first_observed": compound_return(
-                    nominal[skip_first_start:end_pos], empty_value=0.0),
+                    nominal[skip_first_start:end_pos]),
                 "real_ret_skip_first_observed": compound_return(
-                    real[skip_first_start:end_pos], empty_value=0.0),
+                    real[skip_first_start:end_pos]),
                 **period_end_fields,
                 **stock_terminal,
             })
@@ -281,6 +281,7 @@ def build_calendar_windows(df: pd.DataFrame, windows: Iterable[tuple[int, int]],
             else:
                 period_end_fields = terminal_fields(g.iloc[0], "period_end_")
 
+            no_post_start_obs = observed_rows == 0
             rows.append({
                 "analysis": "calendar_window",
                 "horizon": f"{horizon_years}y",
@@ -296,9 +297,16 @@ def build_calendar_windows(df: pd.DataFrame, windows: Iterable[tuple[int, int]],
                 "missing_calendar_months": realized_months - observed_rows,
                 "is_sparse_history": observed_rows < realized_months,
                 "terminal_reason": terminal_reason,
-                "included_in_summary": terminal_reason != "sample_end",
-                "nominal_ret": compound_return(nominal[start_pos:end_pos], empty_value=0.0),
-                "real_ret": compound_return(real[start_pos:end_pos], empty_value=0.0),
+                "included_in_summary": (terminal_reason != "sample_end") and not no_post_start_obs,
+                "no_post_start_obs": no_post_start_obs,
+                "nominal_ret": (
+                    np.nan if no_post_start_obs
+                    else compound_return(nominal[start_pos:end_pos])
+                ),
+                "real_ret": (
+                    np.nan if no_post_start_obs
+                    else compound_return(real[start_pos:end_pos])
+                ),
                 "nominal_ret_skip_first_observed": np.nan,
                 "real_ret_skip_first_observed": np.nan,
                 **period_end_fields,
@@ -429,9 +437,9 @@ def full_life(df: pd.DataFrame) -> pd.DataFrame:
             "fulllife_nominal": compound_return(g["MthRet"].to_numpy(dtype=np.float64)),
             "fulllife_real": compound_return(g["real_ret"].to_numpy(dtype=np.float64)),
             "fulllife_nominal_skip_first_observed": compound_return(
-                g["MthRet"].to_numpy(dtype=np.float64)[1:], empty_value=0.0),
+                g["MthRet"].to_numpy(dtype=np.float64)[1:]),
             "fulllife_real_skip_first_observed": compound_return(
-                g["real_ret"].to_numpy(dtype=np.float64)[1:], empty_value=0.0),
+                g["real_ret"].to_numpy(dtype=np.float64)[1:]),
             **terminal_fields(g.iloc[-1], "stock_terminal_"),
         })
     return pd.DataFrame(rows)
@@ -442,6 +450,10 @@ def period_audit(periods: pd.DataFrame) -> pd.DataFrame:
     for (analysis, horizon), d in periods.groupby(["analysis", "horizon"], sort=False):
         reasons = d["terminal_reason"].value_counts()
         included = d[d["included_in_summary"]]
+        if "no_post_start_obs" in d.columns:
+            no_post_count = int(d["no_post_start_obs"].astype("boolean").fillna(False).sum())
+        else:
+            no_post_count = 0
         rows.append({
             "analysis": analysis,
             "horizon": horizon,
@@ -452,6 +464,7 @@ def period_audit(periods: pd.DataFrame) -> pd.DataFrame:
             "complete_periods": int(reasons.get("complete", 0)),
             "delisted_partial_periods": int(reasons.get("delisted", 0)),
             "sample_end_censored_periods": int(reasons.get("sample_end", 0)),
+            "no_post_start_obs_periods": no_post_count,
             "sparse_periods": int(d["is_sparse_history"].sum()),
             "median_realized_months_included": float(included["realized_months"].median()),
         })
@@ -473,7 +486,7 @@ def universe_summary(df: pd.DataFrame, cpi: pd.DataFrame) -> pd.DataFrame:
         "cpi_start_ymm": int(cpi["YYYYMM"].min()),
         "cpi_end_ymm": int(cpi["YYYYMM"].max()),
         "cpi_factor": float(cpi["CPI"].iloc[-1] / cpi["CPI"].iloc[0]),
-        "cpi_cagr": float((cpi["CPI"].iloc[-1] / cpi["CPI"].iloc[0]) ** (12 / len(cpi)) - 1),
+        "cpi_cagr": float((cpi["CPI"].iloc[-1] / cpi["CPI"].iloc[0]) ** (12 / (len(cpi) - 1)) - 1),
     }
     return pd.DataFrame([out])
 

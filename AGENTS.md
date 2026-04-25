@@ -38,11 +38,19 @@ stock is not dropped from the sample.
 
 - Stock-anchored 10-year and 30-year periods: for each stock, form
   non-overlapping holding periods starting from its first observed CRSP month.
+  The first observed month return is included in compounding (this convention
+  is reported alongside a skip-first-observed sensitivity).
   A period that begins but cannot complete because the stock delists early is
   still included, terminated at the stock's last observed month.
 - Calendar start-cohort windows: fixed windows such as 1925-1935, 1935-1945,
   and 1985-2015. A stock must exist at the window start to enter that window;
-  stocks listed midway through the window are not added halfway.
+  stocks listed midway through the window are not added halfway. The window
+  models a buy-at-end-of-start_ymm to sell-at-end-of-target_end_ymm investor,
+  so the start_ymm month return itself is excluded from compounding (it was
+  earned before the assumed entry). Cohort stocks whose only observation is the
+  start_ymm month (delisted during the start month, hence not tradable at end
+  of start_ymm) are flagged via `no_post_start_obs` and excluded from headline
+  summaries.
 - Active periods that are incomplete only because the sample ends are retained
   in the detail/audit output but excluded from headline holding-period
   summaries.
